@@ -1,0 +1,15 @@
+requirement_sentence
+The system shall provide the ability to record the user ID and date of all updates to the problem or diagnosis list
+The system shall provide the ability to generate hardcopy and electronic output by date possibly and possibly date range
+The system shall provide the ability to cosign a note and record the date and time of signature
+The system shall provide the ability to export structured data which removes those identifiers listed in the HIPAA definition of a limited data set
+The system shall provide the ability to record user ID and date or time stamp for all referral related events
+This export on hardcopy and electronic output shall leave the actual PHI data unmodified in the original record
+The system shall provide the ability to record that patient specific instructions or educational material were provided to the patient
+The system shall allow authorized users to update the directory
+Users must change the initially assigned login password immediately after the first successful login
+The system shall provide the ability to create hardcopy and electronic report summary information (procedures  medications  labs  immunizations  allergies  and vital signs)
+The system must send a confirmation email whenever an order is placed
+The message must be updated for all users in a chat within 0.1 seconds
+The IOS application must support iPhone devices running on OS version 3.6
+The user ID and date or time stamp shall be recorded when the allergies reviewed option is selected
