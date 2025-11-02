@@ -75,10 +75,10 @@ def upload():
 def preprocess():
     global Y
     global X
-    Y.clear()
-    X.clear()
     global filename
     text.delete('1.0', END)
+    X=[]
+    Y=[]
     dataset = pd.read_csv(filename,usecols=['sentence','NFR_boolean'],encoding='latin-1',nrows=2000)
     dataset = dataset.values
     for i in range(len(dataset)):
@@ -95,46 +95,56 @@ def preprocess():
     
 def featuresEmbed():
     text.delete('1.0', END)
-    global Y
-    global X
-    global tf_X
-    global tfidf_X
-    global wordvec_X
-    global vectorizer
-    global tfidf_vectorizer
-    global wordvec_model
+    global Y, X
+    global tf_X, tfidf_X, wordvec_X
+    global vectorizer, tfidf_vectorizer, wordvec_model
 
+    # -------------------- TF --------------------
     vectorizer = CountVectorizer()
     tf_X = vectorizer.fit_transform(X).toarray()
-    df = pd.DataFrame(tf_X, columns=vectorizer.get_feature_names())
-    text.insert(END,"TF Features Embed Vector\n\n")
-    text.insert(END,str(df.head())+"\n\n")
-    df = df.values
-    tf_X = df[:,0:df.shape[1]]
-                
+    df = pd.DataFrame(tf_X, columns=vectorizer.get_feature_names_out())
+    text.insert(END, "TF Features Embed Vector\n\n")
+    text.insert(END, str(df.head()) + "\n\n")
 
-    stopwords=stopwords = nltk.corpus.stopwords.words("english")
-    tfidf_vectorizer = TfidfVectorizer(stop_words=stopwords,use_idf=True, smooth_idf=False, norm=None, decode_error='replace')
-    tfidf_X = tfidf_vectorizer.fit_transform(X).toarray()        
-    df = pd.DataFrame(tfidf_X, columns=tfidf_vectorizer.get_feature_names())
-    text.insert(END,"TF-IDF Features Embed Vector\n\n")
-    text.insert(END,str(df.head())+"\n\n")
-    df = df.values
-    tfidf_X = df[:,0:df.shape[1]]
+    # -------------------- TF-IDF --------------------
+    stopwords_list = nltk.corpus.stopwords.words("english")
+    tfidf_vectorizer = TfidfVectorizer(stop_words=stopwords_list, use_idf=True, smooth_idf=False, norm=None, decode_error='replace')
+    tfidf_X = tfidf_vectorizer.fit_transform(X).toarray()
+    df = pd.DataFrame(tfidf_X, columns=tfidf_vectorizer.get_feature_names_out())
+    text.insert(END, "TF-IDF Features Embed Vector\n\n")
+    text.insert(END, str(df.head()) + "\n\n")
 
-    temp = []
-    for i in range(len(X)):
-        temp.append(X[i].split(" "))
+    # -------------------- WORD2VEC --------------------
+    # Tokenize sentences for Word2Vec
+    sentences = [sentence.split() for sentence in X]
 
-    wordvec_model = Word2Vec(temp,size=150, window=10, min_count=2, workers=10, iter=10)
-    vocabulary = wordvec_model.wv.vocab
-    ordered_vocab = [(term, voc.index, voc.count) for term, voc in vocabulary.items()]
-    ordered_vocab = sorted(ordered_vocab, key=lambda k: k[2])
-    ordered_terms, term_indices, term_counts = zip(*ordered_vocab)
-    wordvec_X = tfidf_X
-    text.insert(END,"WORD2VEC Features Embed Vector\n\n")
-    text.insert(END,str(wordvec_X)+"\n\n")
+    # Train the Word2Vec model
+    wordvec_model = Word2Vec(
+        sentences=sentences,
+        size=150,
+        window=10,
+        min_count=1,
+        workers=10,
+        iter=10
+    )
 
+
+    # Compute average Word2Vec vector per document
+    wordvec_X = []
+    for sentence in sentences:
+        vec = np.zeros(150)
+        count = 0
+        for word in sentence:
+            if word in wordvec_model.wv:
+                vec += wordvec_model.wv[word]
+                count += 1
+        if count > 0:
+            vec /= count  # average
+        wordvec_X.append(vec)
+    wordvec_X = np.array(wordvec_X)
+
+    text.insert(END, "Word2Vec Features Embed Vector\n\n")
+    text.insert(END, str(pd.DataFrame(wordvec_X).head()) + "\n\n")
     
 def metrics(name,feature,y_test, prediction_data):
     p = precision_score(y_test, prediction_data,average='macro') * 95
